@@ -54,6 +54,19 @@ textarea::placeholder{color:var(--muted);}
 .btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 30px #f59e0b55;}
 .btn-generate:active{transform:translateY(0);}
 
+.csv-upload-area{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem;
+  padding:1rem 1.2rem;border:2px dashed #ffffff22;border-radius:14px;background:#ffffff06;
+  cursor:pointer;transition:all .3s;}
+.csv-upload-area:hover{border-color:var(--gold);background:#f59e0b08;}
+.csv-upload-area.dragover{border-color:var(--gold);background:#f59e0b12;}
+.csv-upload-icon{font-size:1.6rem;}
+.csv-upload-text{display:flex;flex-direction:column;gap:.15rem;}
+.csv-upload-text .primary{font-family:'Inter',sans-serif;font-weight:600;font-size:.9rem;color:var(--text);}
+.csv-upload-text .secondary{font-family:'Inter',sans-serif;font-size:.75rem;color:var(--muted);}
+.csv-file-input{display:none;}
+.csv-separator{text-align:center;color:var(--muted);font-size:.8rem;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:.8rem;font-family:'Inter',sans-serif;}
+
 /* ── SCREEN 2: WHEEL ── */
 #screen-wheel{flex-direction:column;align-items:center;justify-content:flex-start;padding:0;gap:0;overflow:hidden;}
 .wheel-side{display:flex;flex-direction:column;align-items:center;gap:1rem;padding-top:1.5rem;}
@@ -119,6 +132,15 @@ textarea::placeholder{color:var(--muted);}
   </div>
   <div class="input-card">
     <label for="name-input">Participant Names</label>
+    <div class="csv-upload-area" id="csv-upload-area">
+      <div class="csv-upload-icon">📄</div>
+      <div class="csv-upload-text">
+        <span class="primary">Upload CSV File</span>
+        <span class="secondary">Click or drag & drop a .csv file to import names</span>
+      </div>
+    </div>
+    <input type="file" accept=".csv" class="csv-file-input" id="csv-file-input">
+    <div class="csv-separator">— or paste manually —</div>
     <textarea id="name-input" placeholder="Paste names here, one per line...&#10;&#10;Alice Johnson&#10;Bob Smith&#10;Charlie Lee&#10;..."></textarea>
     <div class="count-label" id="count-label"></div>
     <button class="btn-generate" id="btn-generate">Generate Wheel →</button>
@@ -558,10 +580,104 @@ btnGenerate.addEventListener('click', () => {
 });
 
 // ── INPUT COUNTER ──
-nameInput.addEventListener('input', () => {
+function updateCount() {
   const parsed = nameInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
   countLabel.style.color = '#94a3b8';
   countLabel.textContent = parsed.length > 0 ? `${parsed.length} name${parsed.length > 1 ? 's' : ''} detected` : '';
+}
+nameInput.addEventListener('input', updateCount);
+
+// ── CSV IMPORT ──
+const csvUploadArea = document.getElementById('csv-upload-area');
+const csvFileInput  = document.getElementById('csv-file-input');
+
+const NAME_PATTERNS = [
+  /^name$/i, /^full[\s_-]?name$/i, /^participant[\s_-]?name$/i,
+  /^participant$/i, /^student[\s_-]?name$/i, /^student$/i,
+  /^display[\s_-]?name$/i, /^person$/i, /^attendee$/i,
+  /^winner$/i, /^member$/i, /^nama$/i
+];
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length === 0) return [];
+
+  // Detect delimiter
+  const firstLine = lines[0];
+  const delim = firstLine.includes(',') ? ',' : firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
+
+  const rows = lines.map(line => {
+    const cols = [];
+    let current = '', inQuotes = false;
+    for (let c of line) {
+      if (c === '"') { inQuotes = !inQuotes; }
+      else if (c === delim && !inQuotes) { cols.push(current.trim()); current = ''; }
+      else { current += c; }
+    }
+    cols.push(current.trim());
+    return cols;
+  });
+
+  if (rows.length < 2) {
+    // Single row or no header — treat everything as names
+    return rows.flat().filter(s => s.length > 0);
+  }
+
+  const headers = rows[0];
+  let nameCol = -1;
+
+  // Try to match a name column header
+  for (let p of NAME_PATTERNS) {
+    const idx = headers.findIndex(h => p.test(h.replace(/["']/g, '').trim()));
+    if (idx !== -1) { nameCol = idx; break; }
+  }
+
+  // Fallback: if first row looks like a header (has non-numeric text), use first column
+  if (nameCol === -1) {
+    const isHeader = headers.some(h => isNaN(h) && h.length > 0);
+    if (isHeader) nameCol = 0;
+  }
+
+  if (nameCol !== -1) {
+    // Has header row — skip it
+    return rows.slice(1).map(r => r[nameCol] || '').filter(s => s.length > 0);
+  } else {
+    // No header — use first column of all rows
+    return rows.map(r => r[0] || '').filter(s => s.length > 0);
+  }
+}
+
+function handleCSVFile(file) {
+  if (!file || !file.name.toLowerCase().endsWith('.csv')) {
+    countLabel.style.color = '#f87171';
+    countLabel.textContent = '⚠ Please upload a .csv file.';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const names = parseCSV(e.target.result);
+    if (names.length === 0) {
+      countLabel.style.color = '#f87171';
+      countLabel.textContent = '⚠ No names found in CSV.';
+      return;
+    }
+    nameInput.value = names.join('\n');
+    updateCount();
+    countLabel.style.color = '#10b981';
+    countLabel.textContent = `✅ Imported ${names.length} name${names.length > 1 ? 's' : ''} from ${file.name}`;
+  };
+  reader.readAsText(file);
+}
+
+csvUploadArea.addEventListener('click', () => csvFileInput.click());
+csvFileInput.addEventListener('change', e => { if (e.target.files[0]) handleCSVFile(e.target.files[0]); });
+
+csvUploadArea.addEventListener('dragover', e => { e.preventDefault(); csvUploadArea.classList.add('dragover'); });
+csvUploadArea.addEventListener('dragleave', () => csvUploadArea.classList.remove('dragover'));
+csvUploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  csvUploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleCSVFile(e.dataTransfer.files[0]);
 });
 
 // ── SPIN TRIGGERS ──
