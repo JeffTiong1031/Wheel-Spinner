@@ -1,6 +1,6 @@
 # MYTECH Career Fair Lucky Draw 🎡
 
-![Generic Spinning Wheel](https://media.giphy.com/media/3o7TKrEzvLbgqjOUOQ/giphy.gif)
+![Generic Spinning Wheel](https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3MTdodGpzM2R5NGdidnJjdjNzYnJpeXR4MjJrZG03enZjM3Q5ZTc1NCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/flw1xlTYMBVFKBHzPz/giphy.gif)
 
 A professional, high-performance, and visually stunning wheel spinner web application designed specifically for the MYTECH Career Fair. Built to handle large numbers of participants with smooth animations, immersive sound effects, and an engaging user experience.
 
