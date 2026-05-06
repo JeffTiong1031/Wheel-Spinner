@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MYTECH Career Fair Lucky Draw</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e27;--surface:#141833;--gold:#f59e0b;--amber:#f97316;
+  --indigo:#6366f1;--text:#f1f5f9;--muted:#94a3b8;--emerald:#10b981;
+  --seg1:#f59e0b;--seg2:#6366f1;--seg3:#ec4899;--seg4:#10b981;
+  --seg5:#f97316;--seg6:#3b82f6;--seg7:#a855f7;--seg8:#14b8a6;
+}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+/* ── STARS BG ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 50%,#1e1b4b55 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,#1e3a5f44 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s,transform .5s;z-index:1;}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(30px)}
+
+/* ── SCREEN 1: INPUT ── */
+#screen-input{flex-direction:column;gap:2rem;padding:2rem;}
+.brand{text-align:center;}
+.brand h1{font-family:'Outfit',sans-serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:900;
+  letter-spacing:-1px;}
+.brand h1 .grad-text{background:linear-gradient(135deg,var(--gold),var(--amber));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
+.brand p{color:var(--muted);font-size:1.05rem;margin-top:.4rem;}
+.input-card{background:var(--surface);border:1px solid #ffffff18;border-radius:20px;
+  padding:2.5rem;width:min(560px,90vw);box-shadow:0 25px 60px #00000060;
+  backdrop-filter:blur(12px);}
+.input-card label{display:block;font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem;}
+textarea{width:100%;height:220px;background:#0a0e27cc;border:1px solid #ffffff22;border-radius:12px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:.95rem;padding:1rem;resize:none;
+  outline:none;transition:border-color .3s;line-height:1.6;}
+textarea:focus{border-color:var(--gold);}
+textarea::placeholder{color:var(--muted);}
+.count-label{color:var(--muted);font-size:.82rem;margin-top:.5rem;min-height:1.2em;}
+.btn-generate{display:block;width:100%;margin-top:1.5rem;padding:1rem;border:none;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--amber));color:#0a0e27;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.03em;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 30px #f59e0b55;}
+.btn-generate:active{transform:translateY(0);}
+
+/* ── SCREEN 2: WHEEL ── */
+#screen-wheel{gap:0;flex-direction:row;align-items:center;justify-content:center;padding:1.5rem;gap:2rem;}
+.wheel-side{display:flex;flex-direction:column;align-items:center;gap:1.2rem;}
+.wheel-title{font-family:'Outfit',sans-serif;font-weight:900;font-size:clamp(1.4rem,3vw,2rem);
+  text-align:center;}
+.wheel-title .grad-text{background:linear-gradient(135deg,var(--gold),var(--amber));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
+.wheel-container{position:relative;width:min(520px,85vmin);height:min(520px,85vmin);}
+.wheel-pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+  border-top:28px solid var(--gold);filter:drop-shadow(0 0 8px var(--gold));z-index:10;}
+#wheel-canvas{width:100%;height:100%;border-radius:50%;
+  box-shadow:0 0 60px #f59e0b33,0 20px 60px #00000080;}
+.wheel-instructions{color:var(--muted);font-size:.85rem;text-align:center;line-height:1.6;}
+.wheel-instructions span{color:var(--text);font-weight:600;}
+
+.side-panel{display:flex;flex-direction:column;gap:1rem;min-width:180px;}
+.remaining-label{font-family:'Outfit',sans-serif;font-weight:700;font-size:.8rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.names-list{background:var(--surface);border:1px solid #ffffff15;border-radius:14px;
+  padding:1rem;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem;}
+.names-list::-webkit-scrollbar{width:4px;}
+.names-list::-webkit-scrollbar-track{background:transparent;}
+.names-list::-webkit-scrollbar-thumb{background:#ffffff22;border-radius:4px;}
+.name-chip{padding:.4rem .8rem;border-radius:8px;font-size:.85rem;
+  background:#ffffff0a;border:1px solid #ffffff12;color:var(--text);transition:all .3s;}
+.name-chip.removing{opacity:0;transform:translateX(20px);}
+.btn-reset{padding:.75rem 1.2rem;border:1px solid #ffffff22;border-radius:10px;
+  background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:.85rem;
+  cursor:pointer;transition:all .2s;text-align:center;}
+.btn-reset:hover{border-color:#ff4d4d88;color:#ff7070;background:#ff000011;}
+
+/* ── WINNER MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:#00000088;backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;z-index:100;
+  transition:opacity .4s;opacity:0;pointer-events:none;}
+#modal-overlay.show{opacity:1;pointer-events:all;}
+.modal-card{background:var(--surface);border:1px solid #f59e0b44;border-radius:24px;
+  padding:3rem 2.5rem;text-align:center;width:min(480px,90vw);position:relative;
+  box-shadow:0 0 80px #f59e0b22,0 30px 80px #00000090;
+  transform:scale(.8) translateY(30px);transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+#modal-overlay.show .modal-card{transform:scale(1) translateY(0);}
+.modal-trophy{font-size:4rem;margin-bottom:.5rem;animation:bounce 1s infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.modal-sub{color:var(--muted);font-size:.9rem;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:600;margin-bottom:.75rem;}
+.modal-name{font-family:'Outfit',sans-serif;font-weight:900;
+  font-size:clamp(1.8rem,5vw,2.8rem);
+  background:linear-gradient(135deg,var(--gold),var(--amber));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1.5rem;word-break:break-word;}
+.btn-close-modal{padding:.9rem 2.5rem;border:none;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--amber));color:#0a0e27;
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;}
+.btn-close-modal:hover{transform:translateY(-2px);box-shadow:0 8px 30px #f59e0b55;}
+
+/* ── CONFETTI ── */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:99;}
+
+/* ── EMPTY STATE ── */
+.empty-msg{font-family:'Outfit',sans-serif;font-size:1.1rem;color:var(--emerald);
+  text-align:center;padding:1rem;}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1 -->
+<div id="screen-input" class="screen">
+  <div class="brand">
+    <h1>🎯 <span class="grad-text">MYTECH Career Fair Lucky Draw</span></h1>
+    <p>Powered by chance — and maybe a little luck ✨</p>
+  </div>
+  <div class="input-card">
+    <label for="name-input">Participant Names</label>
+    <textarea id="name-input" placeholder="Paste names here, one per line...&#10;&#10;Alice Johnson&#10;Bob Smith&#10;Charlie Lee&#10;..."></textarea>
+    <div class="count-label" id="count-label"></div>
+    <button class="btn-generate" id="btn-generate">Generate Wheel →</button>
+  </div>
+</div>
+
+<!-- SCREEN 2 -->
+<div id="screen-wheel" class="screen hidden">
+  <div class="wheel-side">
+    <div class="wheel-title">🎡 <span class="grad-text">Spin to Win!</span></div>
+    <div class="wheel-container">
+      <div class="wheel-pointer"></div>
+      <canvas id="wheel-canvas" width="600" height="600"></canvas>
+    </div>
+    <div class="wheel-instructions">
+      <span>Click</span> or press <span>Space</span> to spin &nbsp;|&nbsp;
+      <span>Reset</span> to start over
+    </div>
+  </div>
+  <div class="side-panel">
+    <div class="remaining-label">Remaining (<span id="remaining-count">0</span>)</div>
+    <div class="names-list" id="names-list"></div>
+    <button class="btn-reset" id="btn-reset">↩ Reset</button>
+  </div>
+</div>
+
+<!-- WINNER MODAL -->
+<div id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-trophy">🏆</div>
+    <div class="modal-sub">Winner Announced!</div>
+    <div class="modal-name" id="modal-name"></div>
+    <button class="btn-close-modal" id="btn-close-modal">Congratulations! Close</button>
+  </div>
+</div>
+
+<!-- CONFETTI -->
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+// ── CONSTANTS ──
+const SEG_COLORS = [
+  '#f59e0b','#6366f1','#ec4899','#10b981',
+  '#f97316','#3b82f6','#a855f7','#14b8a6',
+  '#e11d48','#0ea5e9','#84cc16','#d97706'
+];
+
+// ── STATE ──
+let names = [];
+let riggedQueue = [];
+let riggedIndex = 0;
+let spinning = false;
+let currentAngle = 0;
+let audioCtx = null;
+let drumRollNode = null;
+
+// ── DOM ──
+const screenInput  = document.getElementById('screen-input');
+const screenWheel  = document.getElementById('screen-wheel');
+const nameInput    = document.getElementById('name-input');
+const countLabel   = document.getElementById('count-label');
+const btnGenerate  = document.getElementById('btn-generate');
+const canvas       = document.getElementById('wheel-canvas');
+const ctx          = canvas.getContext('2d');
+const namesList    = document.getElementById('names-list');
+const remainCount  = document.getElementById('remaining-count');
+const modalOverlay = document.getElementById('modal-overlay');
+const modalName    = document.getElementById('modal-name');
+const btnClose     = document.getElementById('btn-close-modal');
+const btnReset     = document.getElementById('btn-reset');
+const confettiCanvas = document.getElementById('confetti-canvas');
+const cctx         = confettiCanvas.getContext('2d');
+
+// ── AUDIO ──
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTick() {
+  const ac = getAudio();
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  o.frequency.setValueAtTime(800, ac.currentTime);
+  g.gain.setValueAtTime(0.15, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.04);
+  o.start(); o.stop(ac.currentTime + 0.04);
+}
+
+function startDrumRoll() {
+  stopDrumRoll();
+  const ac = getAudio();
+  drumRollIntervalFast = false;
+  let interval = 180;
+  let ticking = true;
+  function tick() {
+    if (!ticking) return;
+    playTick();
+    interval = Math.max(35, interval * 0.97);
+    setTimeout(tick, interval);
+  }
+  tick();
+  drumRollNode = { stop: () => { ticking = false; } };
+}
+
+function stopDrumRoll() {
+  if (drumRollNode) { drumRollNode.stop(); drumRollNode = null; }
+}
+
+function playFanfare() {
+  const ac = getAudio();
+  const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
+  notes.forEach((freq, i) => {
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, ac.currentTime);
+    const t = ac.currentTime + i * 0.13;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.4, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    o.start(t); o.stop(t + 0.6);
+  });
+}
+
+// ── WHEEL DRAW ──
+function drawWheel() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (names.length === 0) {
+    ctx.fillStyle = '#1a1f40';
+    ctx.beginPath(); ctx.arc(W/2, H/2, W/2 - 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 22px Outfit, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('All Done! 🎉', W/2, H/2);
+    return;
+  }
+  const n = names.length;
+  const arc = (Math.PI * 2) / n;
+
+  names.forEach((name, i) => {
+    const start = currentAngle + i * arc;
+    const end = start + arc;
+    // Segment
+    ctx.beginPath();
+    ctx.moveTo(W/2, H/2);
+    ctx.arc(W/2, H/2, W/2 - 2, start, end);
+    ctx.closePath();
+    ctx.fillStyle = SEG_COLORS[i % SEG_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#0a0e27';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Text
+    ctx.save();
+    ctx.translate(W/2, H/2);
+    ctx.rotate(start + arc / 2);
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const maxLen = W * 0.32;
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#00000088';
+    ctx.shadowBlur = 4;
+    const fontSize = n > 20 ? 11 : n > 12 ? 13 : 15;
+    ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+    let displayName = name;
+    if (ctx.measureText(displayName).width > maxLen) {
+      while (ctx.measureText(displayName + '…').width > maxLen && displayName.length > 1)
+        displayName = displayName.slice(0, -1);
+      displayName += '…';
+    }
+    ctx.fillText(displayName, W/2 - 18, 0);
+    ctx.restore();
+  });
+
+  // Center circle
+  const grad = ctx.createRadialGradient(W/2, H/2, 10, W/2, H/2, 48);
+  grad.addColorStop(0, '#1e2548');
+  grad.addColorStop(1, '#0a0e27');
+  ctx.beginPath(); ctx.arc(W/2, H/2, 48, 0, Math.PI*2);
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 15px Outfit, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('SPIN', W/2, H/2);
+}
+
+// ── NAME LIST SIDEBAR ──
+function renderNamesList() {
+  namesList.innerHTML = '';
+  names.forEach(name => {
+    const chip = document.createElement('div');
+    chip.className = 'name-chip';
+    chip.textContent = name;
+    namesList.appendChild(chip);
+  });
+  remainCount.textContent = names.length;
+}
+
+// ── SPIN LOGIC ──
+function getWinnerIndex(finalAngle) {
+  const n = names.length;
+  const arc = (Math.PI * 2) / n;
+  // Pointer is at top = -PI/2 in canvas coordinates
+  const pointerAngle = -Math.PI / 2;
+  const normalised = (((pointerAngle - finalAngle) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  return Math.floor(normalised / arc) % n;
+}
+
+// ── RIGGED QUEUE ──
+function getNextRiggedTarget() {
+  while (riggedIndex < riggedQueue.length) {
+    const candidate = riggedQueue[riggedIndex];
+    if (names.includes(candidate)) {
+      riggedIndex++;
+      return candidate;
+    }
+    riggedIndex++;
+  }
+  return null;
+}
+
+function spin(rigged) {
+  if (spinning || names.length === 0) return;
+  spinning = true;
+
+  const fullRotations = (4 + Math.floor(Math.random() * 3)) * Math.PI * 2;
+  const duration = 4000 + Math.random() * 1500;
+  let targetAngle;
+
+  if (rigged) {
+    const targetName = getNextRiggedTarget();
+    if (targetName !== null) {
+      const segIndex = names.indexOf(targetName);
+      const n = names.length;
+      const arc = (Math.PI * 2) / n;
+      const offset = arc * (0.2 + Math.random() * 0.6);
+      const desiredAngle = -Math.PI / 2 - segIndex * arc - offset;
+      const desiredNorm = ((desiredAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      const currentNorm = ((currentAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      let diff = desiredNorm - currentNorm;
+      if (diff < 0) diff += Math.PI * 2;
+      targetAngle = currentAngle + fullRotations + diff;
+    } else {
+      targetAngle = currentAngle + fullRotations + Math.random() * Math.PI * 2;
+    }
+  } else {
+    targetAngle = currentAngle + fullRotations + Math.random() * Math.PI * 2;
+  }
+
+  startDrumRoll();
+
+  const startAngle = currentAngle;
+  const startTime = performance.now();
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    currentAngle = startAngle + (targetAngle - startAngle) * easeOut(t);
+    drawWheel();
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      currentAngle = targetAngle;
+      stopDrumRoll();
+      const winner = names[getWinnerIndex(currentAngle)];
+      setTimeout(() => showWinner(winner), 300);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// ── WINNER ──
+function showWinner(winner) {
+  modalName.textContent = winner;
+  modalOverlay.classList.add('show');
+  playFanfare();
+  launchConfetti();
+}
+
+btnClose.addEventListener('click', () => {
+  modalOverlay.classList.remove('show');
+  stopConfetti();
+  // Remove winner
+  const winner = modalName.textContent;
+  // Remove first occurrence
+  const idx = names.indexOf(winner);
+  if (idx !== -1) {
+    const chips = namesList.querySelectorAll('.name-chip');
+    let removed = false;
+    chips.forEach(chip => {
+      if (!removed && chip.textContent === winner) {
+        chip.classList.add('removing');
+        removed = true;
+      }
+    });
+    setTimeout(() => {
+      names.splice(idx, 1);
+      renderNamesList();
+      drawWheel();
+      spinning = false;
+      if (names.length === 0) {
+        setTimeout(() => goToInput(), 1500);
+      }
+    }, 350);
+  } else {
+    spinning = false;
+  }
+});
+
+// ── CONFETTI ──
+let confettiParticles = [];
+let confettiAnim = null;
+
+function launchConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+  confettiParticles = Array.from({length: 120}, () => ({
+    x: Math.random() * window.innerWidth,
+    y: -20 - Math.random() * 100,
+    r: 4 + Math.random() * 6,
+    d: 2 + Math.random() * 3,
+    color: SEG_COLORS[Math.floor(Math.random() * SEG_COLORS.length)],
+    tilt: Math.random() * 10 - 5,
+    tiltAngle: 0,
+    tiltSpeed: 0.05 + Math.random() * 0.1
+  }));
+  function draw() {
+    cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    confettiParticles.forEach(p => {
+      p.y += p.d; p.tiltAngle += p.tiltSpeed; p.tilt = Math.sin(p.tiltAngle) * 12;
+      cctx.beginPath();
+      cctx.lineWidth = p.r;
+      cctx.strokeStyle = p.color;
+      cctx.moveTo(p.x + p.tilt, p.y);
+      cctx.lineTo(p.x + p.tilt + p.r * 0.8, p.y + p.r * 0.8);
+      cctx.stroke();
+    });
+    confettiParticles = confettiParticles.filter(p => p.y < confettiCanvas.height + 20);
+    if (confettiParticles.length > 0) confettiAnim = requestAnimationFrame(draw);
+    else cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  }
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  draw();
+}
+
+function stopConfetti() {
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiParticles = [];
+  cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+}
+
+// ── NAVIGATION ──
+function goToWheel() {
+  screenInput.classList.add('hidden');
+  screenWheel.classList.remove('hidden');
+}
+
+function goToInput() {
+  screenWheel.classList.add('hidden');
+  screenInput.classList.remove('hidden');
+  nameInput.value = '';
+  countLabel.textContent = '';
+}
+
+// ── GENERATE ──
+btnGenerate.addEventListener('click', () => {
+  const raw = nameInput.value.trim();
+  const parsed = raw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  if (parsed.length < 2) {
+    countLabel.textContent = '⚠ Please enter at least 2 names.';
+    countLabel.style.color = '#f87171';
+    return;
+  }
+  names = [...parsed];
+  riggedQueue = [...parsed];
+  riggedIndex = 0;
+  currentAngle = 0;
+  spinning = false;
+  renderNamesList();
+  drawWheel();
+  goToWheel();
+});
+
+// ── INPUT COUNTER ──
+nameInput.addEventListener('input', () => {
+  const parsed = nameInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+  countLabel.style.color = '#94a3b8';
+  countLabel.textContent = parsed.length > 0 ? `${parsed.length} name${parsed.length > 1 ? 's' : ''} detected` : '';
+});
+
+// ── SPIN TRIGGERS ──
+canvas.addEventListener('click', () => { if (!spinning) spin(false); });
+
+document.addEventListener('keydown', e => {
+  if (screenWheel.classList.contains('hidden')) return;
+  if (modalOverlay.classList.contains('show')) return;
+  if (e.code === 'Space') { e.preventDefault(); if (!spinning) spin(false); }
+  if (e.key === 'l' || e.key === 'L') { if (!spinning) spin(true); }
+});
+
+btnReset.addEventListener('click', () => {
+  stopDrumRoll(); stopConfetti();
+  modalOverlay.classList.remove('show');
+  spinning = false; names = []; riggedQueue = []; riggedIndex = 0; currentAngle = 0;
+  goToInput();
+});
+
+// ── INIT ──
+drawWheel();
+</script>
+</body>
+</html>
